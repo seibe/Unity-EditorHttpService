@@ -40,6 +40,10 @@ namespace EditorService
 
             try
             {
+                _lock = new object();
+                _queue = new Queue<HttpListenerContext>();
+                EditorApplication.update += onUpdate;
+
                 _listener = new HttpListener();
                 _listener.Prefixes.Add(@"http://*:8889/");
                 _listener.Start();
@@ -60,6 +64,10 @@ namespace EditorService
             var temp = _listener;
             _listener = null;
             temp.Close();
+
+            EditorApplication.update -= onUpdate;
+            _queue = null;
+            _lock = null;
         }
 
         private void respond(HttpListenerContext context)
@@ -75,14 +83,49 @@ namespace EditorService
                 switch (req.Url.AbsolutePath)
                 {
                     case "/":
+                    case "/Version":
                         res.StatusCode = (int)HttpStatusCode.OK;
-                        output.Write("Hello world!");
+                        output.Write(Application.unityVersion);
+                        output.Flush();
+                        break;
+
+                    case "/HasError":
+                        res.StatusCode = (int)HttpStatusCode.OK;
+                        output.Write(CompileErrorChecker.HasError() ? "true" : "false");
+                        output.Flush();
+                        break;
+
+                    case "/Compile":
+                        CompileErrorChecker.ForceCompile();
+                        res.StatusCode = (int)HttpStatusCode.OK;
+                        output.Write("Processed");
                         output.Flush();
                         break;
 
                     default:
                         res.StatusCode = (int)HttpStatusCode.NotFound;
                         break;
+                }
+            }
+        }
+
+        private void onUpdate()
+        {
+            if (_queue.Count > 0)
+            {
+                lock (_lock)
+                {
+                    while (_queue.Count > 0)
+                    {
+                        try
+                        {
+                            respond(_queue.Dequeue());
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.Exception(e);
+                        }
+                    }
                 }
             }
         }
@@ -102,7 +145,11 @@ namespace EditorService
 
             try
             {
-                respond(listener.EndGetContext(result));
+                var context = listener.EndGetContext(result);
+                lock (_lock)
+                {
+                    _queue.Enqueue(context);
+                }
                 listener.BeginGetContext(onRequest, listener);
             }
             catch (Exception e)
@@ -118,6 +165,8 @@ namespace EditorService
             }
         }
 
+        private object _lock = null;
         private HttpListener _listener = null;
+        private Queue<HttpListenerContext> _queue = null;
     }
 }
