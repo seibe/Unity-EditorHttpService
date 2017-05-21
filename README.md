@@ -1,4 +1,4 @@
-# Unity Editor RESTful Service
+# Unity EditorHttpService
 
 Available on Unity 5.6.1f1
 
