@@ -4,7 +4,7 @@
 
 using System;
 
-namespace EditorService
+namespace EditorHttpService
 {
     static class Debug
     {

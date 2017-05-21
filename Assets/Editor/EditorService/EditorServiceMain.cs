@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEditor;
 
-namespace EditorService
+namespace EditorHttpService
 {
     [InitializeOnLoad]
     static class Main

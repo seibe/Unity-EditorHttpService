@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace EditorService
+namespace EditorHttpService
 {
     sealed class Server : ScriptableSingleton<Server>, ISerializationCallbackReceiver
     {

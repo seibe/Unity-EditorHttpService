@@ -2,7 +2,7 @@
 using System.Reflection;
 using UnityEditor;
 
-namespace EditorService
+namespace EditorHttpService
 {
     static class CompileErrorChecker
     {
